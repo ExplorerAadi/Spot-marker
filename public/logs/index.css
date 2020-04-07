@@ -1,0 +1,14 @@
+#map {
+    width: 600px;
+    height: 600px;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+}
+.locations{
+    position: absolute;
+    top: 59%;
+    left: 62%;
+}
