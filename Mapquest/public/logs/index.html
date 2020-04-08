@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List</title>
+    <link href="index.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.js"></script>
+    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.2/mq-map.js?key=48wp5C8UqoqQNbiKsbCrAAET6OybgksY"></script>
+    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.2/mq-geocoding.js?key=48wp5C8UqoqQNbiKsbCrAAET6OybgksY"></script>
+    
+</head>
+    <body>
+        <h1>Saved Locations</h1>
+        <div id="map"></div>
+        <div class="locations">
+            <input type="text" class="search-box" id="user_input" placeholder="New Name" />
+            <ul class="place-list">
+                <li></li>
+            </ul>
+        </div>
+    </body>
+    <script>
+
+        // global bindings
+        let map,
+        geocode,
+        marker,
+        group = [],
+        features;
+
+        const itemsList = document.querySelector('.place-list');
+        const deleteItem = document.querySelector('.delete-item');
+        const editItem = document.querySelector('.edit-item');
+        const saveUserInput = document.querySelector('#user_input')
+
+        // creating map with after queries data from database
+        map = L.map('map', {
+        layers: MQ.mapLayer(),
+        zoom: 10
+        });
+
+        function getData() {
+            fetch('/getLocations', {method: "get"}).then((response) => {
+                return response.json();
+            }).then((data) => {
+                console.log(data)
+
+                populateList(data, itemsList)
+                for(i = 0; i < data.length; i++) {
+                const data_json = data[i]
+                const lat = data[i].lat
+                const long = data[i].long
+
+                marker = L.marker([ lat, long ])
+                .bindPopup(data_json.inputValue);
+
+                group.push(marker);
+                features = L.featureGroup(group).addTo(map);
+                map.fitBounds(features.getBounds());
+                }
+            })
+  
+        }
+
+        function resetUserInput(){
+                saveUserInput.value = '';
+            }
+
+        const buildIDS = (places) => {
+            return {
+                editID : "edit_" + places._id,
+                deleteID : "delete_" + places._id,
+                listItemID : "listItem_" + places._id,
+                placeID : "place_" + places._id
+            }
+        }
+
+        // function editData() {
+        //     const options = {
+        //         method: "put",
+        //         headers: {
+        //             "Content-Type": "application/json"
+        //         },
+        //         body: JSON.stringify({inputValue: saveUserInput.value})
+        //     }
+        //     fetch('/:id', options).then((request, response) => {
+        //         response.json()
+        //     })
+            
+        // }
+
+        const deleteData = (places, listItemID) => {
+            const options =  {
+                method : "delete"
+            }
+            fetch(`/${places._id}`, options).then((request, response) => {
+                return response.json()
+            }).then((data) => {
+                if(data.ok == 1){
+                    $(`#${listItemID}`).remove
+                }
+            })
+        }
+        
+        function populateList(saves = [], placeList) {
+            placeList.innerHTML = saves.map(place => {
+                return `
+                    <li>
+                        <label for="">${place.inputValue}</label>
+                        <input type="submit" onclick="editData()" class="edit-item" value="Edit"/>
+                        <input type="submit" onclick="deleteData()" class="delete-item" value="Delete" />
+                    </li>    
+                `
+            }).join();
+
+        }
+        
+        getData();
+    </script>
+</html>
