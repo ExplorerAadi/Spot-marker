@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPOT</title>
+    <link href="index.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab&display=swap" rel="stylesheet">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/js/all.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.js"></script>
+ 
+    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.2/mq-map.js?key=48wp5C8UqoqQNbiKsbCrAAET6OybgksY"></script>
+    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.2/mq-geocoding.js?key=48wp5C8UqoqQNbiKsbCrAAET6OybgksY"></script>
+</head>
+  <body>
+    <div class="top-container">
+      <div class="content">
+          <h1> Welcome to <span class="spot">Spot</span></h1>
+          <p>I want to visit that place again but have no idea about where it was located. Ever faced this problem ? </br>That's what <span>Spot</span> aims to solve. With the help of Spot, you can mark any location you visit on the map with a name of your choice and Done !</br> It doesn't matter if it's a big shop or a local 'dhabba'. Spot acts like a memory for keeping track of those loveliest spots you visit<br/> anywhere in the world so go on, give it a try..!</p>
+      </div>
+      <div class="overlay"></div>
+      <div class="background-img"></div>
+    </div>
+    <div class="bottom-container">
+      <div class="mapquest" id="map"></div>
+      <div class="card">
+          <h2>Steps to Use:</h2>
+          <p>Step 1. Allow location access to the popup appeared above in the browser.</p>
+          <p>Step 2. Mark the desired location you like to save on the map.</p>
+          <p>Step 3. Move cursor over '+' icon and type a location name then press Enter.</p>
+          <div class="save-box">
+            <form class="save-form popup">
+                <span class="popuptext" id="myPopup">Location Added<span class="close-input" onclick="closeInput()"><a aria-label="Close">&#10006;</a></span></span>
+                <input class="textb" type="text" name="" placeholder="Location" />
+                <a class="save-btn" href="#">
+                    <i class="fas fa-plus" style="font-size: 24px;"></i>
+                </a>            
+            </form>
+          </div>
+          <p><a href="logs/index.html">View Saved Spots</a></p>
+      </div>
+    </div>
+  </body>
+  <script src="../index.js"></script>
+  <script>
+    
+    //Bindings
+    const searchForm = document.querySelector('.save-form');
+    const searchBox = document.querySelector('.textb');
+    const submitBtn = document.querySelector('.save-btn');
+
+    const markerSize = {'sm': [28, 35], 'md': [35, 44], 'lg': [42, 53]};
+    const markerAnchor = {'sm': [14, 35], 'md': [17, 44], 'lg': [21, 53]};
+    const markerPopupAnchor = {'sm': [1, -35], 'md': [1, -44], 'lg': [2, -53]};
+
+    const mediumMarker = L.icon({
+      iconUrl: 'https://assets.mapquestapi.com/icon/v2/marker-sm.png',
+      iconRetinaUrl: 'https://assets.mapquestapi.com/icon/v2/marker-sm@2x.png',
+      iconSize: markerSize.sm,
+      iconAnchor: markerAnchor.sm,
+      popupAnchor: markerPopupAnchor.sm
+    });
+
+    function resetUserInput(){
+      searchBox.value = '';
+    }
+
+    // async function to submit form alongwith location data to the server
+    function submitForm(e) {
+        e.preventDefault()
+        const inputValue = e.target[0].value
+        resetUserInput();
+
+        const lat = results.best.latlng.lat
+        const long = results.best.latlng.lng
+        const data = {lat, long, inputValue}
+        const options = {
+            method: 'post',
+            headers: {
+                "Content-Type" : "application/json"
+            },
+            body: JSON.stringify(data)
+        }
+        fetch('/', options).then((response) => {
+            return response.json();
+        }).then((data) => {
+            if(data.result.ok == 1 && data.result.n == 1) {
+                console.log('added the data into the database')
+            }
+        })
+    }
+    function myFunction() {
+      const popup = document.getElementById("myPopup");
+        popup.classList.add("show");
+    }
+    function closeInput() {
+      const popup = document.getElementById("myPopup");
+      popup.classList.remove("show")
+      
+    }
+
+    // creating the map with the data queired
+    let popup = L.popup(),
+    geocode,
+    map,
+    theMarker = {};
+
+    map = L.map('map', {
+        layers: MQ.mapLayer(),
+        center: [ 12.907850833333336, 77.56260816666665 ],
+        zoom: 10
+    }).on('click', function(e) {
+        popup.setLatLng(e.latlng).openOn(this);
+
+        geocode.reverse(e.latlng);
+    })
+
+    //using geolocation API for current location
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const coords = pos.coords;
+      const lat0 = coords.latitude;
+      const long0 = coords.longitude;
+
+      map.on('click', function (e) {
+        lat = e.latlng.lat;
+        long = e.latlng.lng;
+
+        // clear existing marker, show current location and add a new marker after every click event
+        if(theMarker !== undefined) {
+        map.removeLayer(theMarker);
+        theMarker = L.marker([lat0, long0], {icon: mediumMarker}).addTo(map).bindPopup('My Location')
+        };
+        theMarker = L.marker([lat, long])
+        .addTo(map)
+      })
+    });
+
+    //current marker location data getting reverse geocoded
+    geocode = MQ.geocode().on('success', function(e) {
+        results = e.result
+
+        popup.setContent(geocode.describeLocation(results.best))
+    });
+
+    document.addEventListener('submit', submitForm);
+    document.addEventListener('submit', myFunction);
+  </script>
+</html>

@@ -1,2 +1,2 @@
 # Using-mapQuest-API-
-Using mapQuest API to build a location bookmark app
+Using mapQuest API alongwith leaflet.js plugin to build a location bookmark app called Spot.
