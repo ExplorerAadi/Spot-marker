@@ -58,15 +58,15 @@ app.delete('/:id', (request, response) => {
         }
     })
 })
-
+const PORT = process.env.PORT || 3000;
 db.connect((error) => {
     if(error) {
         console.log('unable to connect to database');
         process.exit(1);
     }
     else{
-        app.listen(3000, () => {
-            console.log('listening at port 3000')
+        app.listen(PORT, () => {
+            console.log(`Our app is running on port ${ PORT }`);
         });
     }
 })
