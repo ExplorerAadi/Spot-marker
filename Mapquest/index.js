@@ -16,7 +16,6 @@ app.get('/getLocations', (request, response) => {
             console.log(error);
         }
         else {
-            console.log(data);
             response.json(data);
         }
     });
@@ -25,7 +24,7 @@ app.get('/getLocations', (request, response) => {
 app.put('/:id', (request, response) => {
     const placeID = request.params.id;
     const userInput = request.body;
-    db.getDB().collection(collection).findOneAndUpdate({_id: db.getPrimaryKey(placeID)}, {$set : {places : userInput.places}},{returnOriginal : false, upsert : true},  (error, result) => {
+    db.getDB().collection(collection).findOneAndUpdate({_id: db.getPrimaryKey(placeID)}, {$set : {inputValue: userInput.inputValue}},{returnOriginal : false, upsert : true}, (error, result) => {
         if(error) {
             console.log(error);
         }
@@ -66,8 +65,8 @@ db.connect((error) => {
         process.exit(1);
     }
     else{
-        app.listen(3001, () => {
-            console.log('listening at port 3001')
+        app.listen(3000, () => {
+            console.log('listening at port 3000')
         });
     }
 })

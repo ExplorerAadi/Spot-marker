@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List</title>
+    <title>Saved Locations</title>
     <link href="index.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab&display=swap" rel="stylesheet">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.js"></script>
@@ -13,13 +15,21 @@
     
 </head>
     <body>
-        <h1>Saved Locations</h1>
-        <div id="map"></div>
-        <div class="locations">
-            <input type="text" class="search-box" id="user_input" placeholder="New Name" />
-            <ul class="place-list">
-                <li></li>
-            </ul>
+        <div class="top-container">
+            <div class="content">
+                <h1>Saved Locations</h1>
+                <p>You can view the name of the marker on the map by clicking on it.</p>
+                <p>To Edit Location Name: Enter a new name in the input box first and then click on the Edit icon of the List item you wish to update.</p>
+            </div>
+            <div class="overlay"></div>
+            <div class="background-img"></div>
+        </div>
+        <div class="bottom-container">
+            <div class="mapquest" id="map"></div>
+            <div class="locations">
+                <div class="search-box"><input type="text" id="user_input" placeholder="New Name" /></div>
+                <div class="place-list"></div>
+            </div>
         </div>
     </body>
     <script>
@@ -42,13 +52,14 @@
         zoom: 10
         });
 
-        function getData() {
+        getData = () => {
             fetch('/getLocations', {method: "get"}).then((response) => {
                 return response.json();
             }).then((data) => {
                 console.log(data)
 
-                populateList(data, itemsList)
+                // populateList(useData, itemsList)
+                renderData(data)
                 for(i = 0; i < data.length; i++) {
                 const data_json = data[i]
                 const lat = data[i].lat
@@ -65,59 +76,64 @@
   
         }
 
-        function resetUserInput(){
+        function resetUserInput() {
                 saveUserInput.value = '';
-            }
-
-        const buildIDS = (places) => {
-            return {
-                editID : "edit_" + places._id,
-                deleteID : "delete_" + places._id,
-                listItemID : "listItem_" + places._id,
-                placeID : "place_" + places._id
-            }
         }
 
-        // function editData() {
-        //     const options = {
-        //         method: "put",
-        //         headers: {
-        //             "Content-Type": "application/json"
-        //         },
-        //         body: JSON.stringify({inputValue: saveUserInput.value})
-        //     }
-        //     fetch('/:id', options).then((request, response) => {
-        //         response.json()
-        //     })
-            
-        // }
-
-        const deleteData = (places, listItemID) => {
-            const options =  {
-                method : "delete"
-            }
-            fetch(`/${places._id}`, options).then((request, response) => {
-                return response.json()
-            }).then((data) => {
-                if(data.ok == 1){
-                    $(`#${listItemID}`).remove
+        itemsList.addEventListener('click', editData = (e) => {
+            let editBtnIsPressed = e.target.className === 'edit-item'
+            if(editBtnIsPressed) {
+                if(saveUserInput.value !== '') {
+                    let id = e.target.parentElement.dataset.id
+                    const options = {
+                    method: "put",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({inputValue: `${saveUserInput.value}`})
+                    }
+                    fetch(`/${id}`, options).then((response) => {
+                        return response.json();
+                    })
+                    .then(getData())
+                    .then(resetUserInput())
+                
                 }
+                else {
+                window.alert('Add a new location name first !')
+                }
+            }
+        })
+        
+
+        function renderData(items) {
+            itemsList.innerHTML = "";
+            items.forEach((item) => {
+                itemsList.innerHTML += `
+                <ul>
+                    <li data-id="${item._id}">
+                        <span class="input-item"><label for="items">${item.inputValue}</label></span>
+                        <button class="edit-item"><i class="fas fa-edit"></i></button>
+                        <button class="delete-item"><span class="del"><i class="fas fa-trash-alt"></i></button>
+                    </li>
+                <ul>
+                `
             })
         }
-        
-        function populateList(saves = [], placeList) {
-            placeList.innerHTML = saves.map(place => {
-                return `
-                    <li>
-                        <label for="">${place.inputValue}</label>
-                        <input type="submit" onclick="editData()" class="edit-item" value="Edit"/>
-                        <input type="submit" onclick="deleteData()" class="delete-item" value="Delete" />
-                    </li>    
-                `
-            }).join();
 
-        }
-        
+        itemsList.addEventListener('click', deleteData = (e) => {
+            let deleteBtnIsPressed = e.target.className === 'delete-item'
+            if(deleteBtnIsPressed) {
+                let id = e.target.parentElement.dataset.id
+                const options =  {
+                method : "delete"
+                }
+                fetch(`/${id}`, options).then((response) => {
+                    return response.json();
+                }).then(getData())
+                
+            }
+        })
         getData();
     </script>
 </html>
