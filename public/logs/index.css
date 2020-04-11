@@ -2,7 +2,6 @@
     width: 600px;
     height: 600px;
 }
-
 body{
     margin: 0;
     padding: 0;
@@ -118,3 +117,4 @@ ul li span:nth-child(3){
     border-color: #fda704;
     box-shadow: 0 0 8px 0 #fda704;;
 }
+
